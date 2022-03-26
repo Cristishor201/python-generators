@@ -1,0 +1,3 @@
+template + modificat pe mine + datele automat
+eventual il pun sa il si printeze ? / sau doar afiseze.
+-> si apoi il fac exe
