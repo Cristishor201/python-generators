@@ -1,0 +1,20 @@
++ modificat pe mine
++ datele automat
+
+Dim DirArray As Variant
+DirArray = Range("a1:a5").Value
+
+
+import date din excel in variabile 
++ sters din excel
+
+
+iar la zile lucratoare fac la fel in excel, o coloana, si apoi o selectez, si filtrez doar pt luna in interes => filtrez zilele din data => array cu datele lucratoare :))
+
+=> apoi pot completa tot tabelul cu for-uri
+=> incerc sa setez dimensiune linii, ca sa pic de fiecare data pe pagina noua?
+
+
+
+
+eventual il pun sa il si printeze ? / sau doar afiseze.
