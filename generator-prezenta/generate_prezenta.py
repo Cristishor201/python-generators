@@ -31,6 +31,25 @@ class Excel:
         self.default = Excel.default() #dictionary
         self.output_folder = output_folder
 
+    def set_default(self, font_name=None, font_size=None, font_bold=None, border=None):
+        if font_name is not None:
+            self.default["font_name"] = font_name
+        if font_size is not None:
+            self.default["font_size"] = font_size
+        if font_bold is not None:
+            self.default["font_bold"] = font_bold
+        if border is not None:
+            self.default["boder"] = border
+
+    def get_font_name(self):
+        return self.default["font_name"]
+
+    def get_font_size(self):
+        return self.default["font_size"]
+
+    def get_font_bold(self):
+        return self.default["font_bold"]
+
     @staticmethod
     def transformSelection(selection): # tuple (row, column) -> col+row
         if isinstance(selection, str):
@@ -91,8 +110,6 @@ class Excel:
     def default():
         return {"font_name": "Times New Roman",
                 "font_size": "12",
-                "font_name_table": "Calibri",
-                "font_size_table": "11",
                 "font_bold": False,
                 "border": {
                     "left": ["thin", 'FF000000'],
@@ -101,7 +118,7 @@ class Excel:
                     "bottom": ["thin", 'FF000000']}
                 }
 
-    def font_style(self, selection, name=None, bold=False, size=None, wrap=False):####################se interfereaza font cu alignement
+    def font_style(self, selection, name=None, bold=False, size=None, wrap=False):
         if isinstance(selection, str):
             select = self.sh[selection]
         elif isinstance(selection, tuple) or isinstance(selection, list):
@@ -112,7 +129,7 @@ class Excel:
 
         select.font = Font(name=self.default["font_name"] if name is None else name, size=size if size is not None else self.default["font_size"], bold=True if bold else self.default["font_bold"])
 
-    def font_align(self, selection, wrap = False):
+    def font_align(self, selection, wrap = False, horizontal=None, vertical =None):
         if isinstance(selection, str):
             select = self.sh[selection]
         elif isinstance(selection, tuple) or isinstance(selection, list):
@@ -121,7 +138,7 @@ class Excel:
             select = None
             raise Exception("No selecting - font_align")
 
-        select.alignment = Alignment(wrap_text=True if wrap else False)
+        select.alignment = Alignment(wrap_text=True if wrap else False, horizontal=horizontal if horizontal is not None else 'left', vertical=vertical if vertical is not None else 'bottom')
 
     def border_style(self, selection, listBorder=[]): # ma mai gandesc la border default
         if isinstance(selection, str): # [[thin, ffff], [thin, ffff], [], []] n-e-s-w
@@ -141,53 +158,27 @@ class Excel:
         if isinstance(column, str):
             self.sh.column_dimensions[column].width = value
         elif isinstance(column, int):
-            self.sh.column_dimensions[get_column_letter(column)].width = value
+            self.sh.column_dimensions[Excel.get_column_letter(column)].width = value
 
     def modify_row(self, row, value):
         self.sh.row_dimensions[row].height = value
+
+    def merge_cells(self, selection=None):
+        if isinstance(selection, str):
+            self.sh.merge_cells(range_string=selection)
+        elif isinstance(selection, list) or isinstance(selection, tuple):
+            if isinstance(selection[0], tuple) and isinstance(selection[1], tuple): # supose selecton = [ [1,2], [3,4]]
+                self.sh.merge_cells(range_string=None, start_row=selection[0][0], start_column=selection[0][1], end_row=selection[1][0], end_column=selection[1][1])
+            else: # [1, 2, 3, 4]
+                self.sh.merge_cells(range_string=None, start_row=selection[0], start_column=selection[1], end_row=selection[2], end_column=selection[3])
+        else:
+            raise Exception("merge cells - Wrong selection: {}".format(selection))
 
     @staticmethod
     def value_to_key(value): # Aprilie -> 4
         listKeys = list(_month.keys())
         listValues = list(_month.values())
         return listKeys[listValues.index(value)]
-
-    def column_auto_size(self, selection):
-        omisiuni = 100
-        if isinstance(selection, int) or isinstance(selection, str):
-            select = Excel.get_column_letter(selection)
-        elif isinstance(selection, tuple) or isinstance(selection, list):
-            select = Excel.get_column_letter(selection[1]) # A
-        #self.sh.column_dimensions[select].width = 20
-
-        blank = 0 ; row = 1 ; max_len = 0 ; is_wrap = False
-        max_font_size = 0
-        while blank <= omisiuni:
-            thisCell = self.sh[select + str(row)]
-            if  thisCell.value is None: #cell empty
-                blank += 1
-                row += 1
-                continue
-            else:
-                blank = 0
-                word_len = len(thisCell.value) # longest text
-                if word_len > max_len:
-                    max_len = word_len
-                if thisCell.alignment.wrapText:
-                    is_wrap = True
-                if thisCell.font.sz > max_font_size: # biggest font size
-                    max_font_size = thisCell.font.sz # 11.0
-                ################################ verific daca e una merged
-                row += 1
-        if is_wrap:
-            self.sh.column_dimensions[select].width = max_len * (max_font_size / 10) / 2 -2
-            print(select, max_len * (max_font_size / 10) / 2) -2
-        else:
-            print(select, max_len * (max_font_size / 10)) -2
-            self.sh.column_dimensions[select].width = max_len * (max_font_size / 10) -2
-
-    def column_size(self, selection, width):
-        pass
 
     def save(self):
         self.wb.save("{}Prezenta-{}.xlsx".format(self.output_folder, self.month))
@@ -197,7 +188,7 @@ if __name__ == '__main__':
     "Reg. Com. J40/11468/2011",
     "CUI:RO29146323",
     "Sediul: Calea Rahovei nr.266-268, corp 60, et.2, camera 30A",
-    "incinta Electromagnetica\nBusiness\nPark.",
+    "incinta Electromagnetica\nBusiness Park.",
     "Contul: RO49INGB0000999903977417",
     "Persoana de contact: Nicoleta Baciu",
     "Telefon: 0723290110/0721153839"
@@ -206,12 +197,23 @@ if __name__ == '__main__':
     ORA_INCEPUT = "09:00"
     ORA_SFARSIT = "17:30"
     PAUZA = "12:30-13:00"
-    year = date.today().year
-    month = str(date.today().month) if date.today().month > 9 else "0" + str(date.today().month)
-    days = get_work_days(date.today().month, date.today().year)
+    current_year = date.today().year
+    current_month = date.today().month
+
+    current_month_str = str(current_month) if current_month > 9 else "0" + str(current_month)
+    days = get_work_days(current_month, current_year)
+
+    # getting free legal days
+    free_days = []
+    with open("libere_{}.txt".format(current_year), "r") as file:
+        for item in file.readlines():
+            day, month, year = list(map(int, item.strip().split("/")))
+            if month  == current_month:
+                free_days.append(day)
 
     settings = Libere.loadJson("settings.json")
     persons = settings["persons"]
+    dim_columns = settings["dim_columns"]
 
     wb = Excel(settings["output_folder"])
 
@@ -222,8 +224,11 @@ if __name__ == '__main__':
     for i in range(4, 12):
         wb.add_value([i, 2], introductionData[i-4])
         if i == 8:
-            wb.font_align([i, 2], wrap=True)
+            wb.font_align([i, 2], wrap=True, vertical="center")
+            wb.modify_row(i, 50)
     wb.add_value("D12", "CONDICA PREZENTA")
+    wb.merge_cells("D12:G12")
+    wb.font_align("D12", horizontal="left")
 
     wb.font_style("B10", bold=True, size="10")
     wb.font_style("B11", bold=True)
@@ -231,33 +236,34 @@ if __name__ == '__main__':
 
     #completat tabel
     curentRow = 15
-    font_name_table = wb.default["font_name_table"]
-    font_size_table = wb.default["font_size_table"]
+    wb.set_default(font_name="Calibri", font_size="11")
     for section in range(len(days)):
         for row in range(1, 2+len(persons) +1): #6
             for col in range(1, 8+1):
                 selection = [curentRow, col]
-                wb.font_style(selection, name=font_name_table, size=font_size_table)
                 if row == 1:
                     if col == 2:
                         wb.add_value(selection, "ZIUA:{}".format(days[section]))
-                        wb.font_style(selection, bold=True)
+                        wb.font_style(selection, name=wb.get_font_name(), size=wb.get_font_size(), bold=True)
                     elif col == 4:
-                        wb.add_value(selection, "LUNA:{}".format(month))
-                        wb.font_style(selection, bold=True)
+                        wb.add_value(selection, "LUNA:{}".format(current_month_str))
+                        wb.font_style(selection, name=wb.get_font_name(), size=wb.get_font_size(), bold=True)
                     elif col == 6:
-                        wb.add_value(selection, "ANUL:{}".format(year))
-                        wb.font_style(selection, bold=True)
+                        wb.add_value(selection, "ANUL:{}".format(current_year))
+                        wb.font_style(selection, name=wb.get_font_name(), size=wb.get_font_size(), bold=True)
                 elif row == 2:
                     if col == 1:
                         wb.add_value(selection, "Nr.")
+                        wb.font_align(selection, vertical="center")
                     elif col == 2:
                         wb.add_value(selection, "Nume si prenume")
+                        wb.font_align(selection, vertical="center")
                     elif col == 3:
                         wb.add_value(selection, "Semnat. Venire")
                         wb.font_align(selection, wrap=True)
                     elif col == 4 or col == 6:
                         wb.add_value(selection, "Ora")
+                        wb.font_align(selection, horizontal="center", vertical="center")
                     elif col == 5:
                         wb.add_value(selection, "Semnat plecare")
                         wb.font_align(selection, wrap=True)
@@ -266,25 +272,34 @@ if __name__ == '__main__':
                         wb.font_align(selection, wrap=True)
                     else: #8
                         wb.add_value(selection, "Observatii")
+                        wb.font_align(selection, vertical="center")
+                    wb.modify_row(curentRow, 30)
                 else: # > 3..6
                     if col == 1:
-                        wb.add_value(selection, str(row-2))
+                        wb.add_value(selection, row-2)
                     elif col == 2:
                         wb.add_value(selection, persons[row-3])
                     elif col == 4:
                         wb.add_value(selection, ORA_INCEPUT)
+                        wb.font_align(selection, horizontal="center")
                     elif col == 6:
                         wb.add_value(selection, ORA_SFARSIT)
+                        wb.font_align(selection, horizontal="center")
                     elif col == 7:
                         wb.add_value(selection, PAUZA)
+                    elif col == 8: # obs data
+                        if row == 3: # first data value
+                            if free_days.count(int(days[section])) > 0:
+                                wb.add_value(selection, "Zi libera legala")
+                                wb.merge_cells(selection=((curentRow, 8), (curentRow + len(persons) -1 , 8)))
+                                wb.font_style(selection, bold=True)
+                                wb.font_align(selection, wrap=True, horizontal="center", vertical="center")
 
                 wb.border_style(selection)
             curentRow += 1
 
     # setat dimensiune coloane
     for col in range(1, 8+1): # -> h
-        if col == 2: # skip B
-            continue
-        wb.column_auto_size(col)
+        wb.modify_column(col, dim_columns[col-1])
 
     wb.save()
