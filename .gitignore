@@ -1,5 +1,2 @@
 certificate/credentials.txt
-generator-prezenta/Prezenta-mai.xlsx
-generator-prezenta/generate_free_days.zip
-generator-prezenta/generate_present.zip
-generator-prezenta/print_prezent.zip
+generator-prezenta/dist/Prezenta-mai.xlsx
