@@ -45,4 +45,4 @@ exe = EXE(
 
 import shutil
 shutil.copyfile('settings.json', '{0}/settings.json'.format(DISTPATH))
-shutil.copyfile('src/allora.PNG', '{0}/src/allora.PNG'.format(DISTPATH))
+shutil.copytree('src', '{0}/src'.format(DISTPATH))

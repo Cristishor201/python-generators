@@ -1,9 +1,26 @@
 {
   "output_folder": "D:\\_Ordine speciala\\My Documents\\GitHub\\generatoare-munca\\generator-prezenta\\",
+  "input_folder" : "D:\\_Ordine speciala\\My Documents\\GitHub\\generatoare-munca\\generator-prezenta\\",
   "persons": [
     "FLORESCU CRISTIAN",
     "Other name"
   ],
+  "company_data": {
+    "logo_img_path" : "src/allora.PNG",
+    "name" : "<Company name>",
+    "Reg_Com" : "<Registery number>",
+    "CUI" : "<CUI/CIF number>",
+    "Place" : "<Adress>",
+    "Place_orientation" : "<in\n here>",
+    "IBAN" : "<IBAN bank number>",
+    "contact_person" : "<Name Surname>",
+    "Phone" : "<phone1>/<phone2>"
+  },
+  "schedule" : {
+    "Start_hour" : "09:00",
+    "End_hour" : "18:00",
+    "break" : "12:30-13:00"
+  },
   "dim_columns": [
     3.11,
     22,
