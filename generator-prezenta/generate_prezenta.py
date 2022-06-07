@@ -4,7 +4,7 @@ from openpyxl.styles import Font, Alignment
 from openpyxl.styles.borders import Border, Side
 from generate_libere import Libere
 from datetime import date
-import calendar, math
+import calendar, math, sys
 _month = {"ianuarie": 1, "februarie": 2, "martie": 3, "aprilie": 4, "mai": 5, "iunie": 6, "iulie": 7, "august": 8, "septembrie": 9, "octombrie": 10, "noiembrie": 11, "decembrie": 12}
 
 def get_work_days(month, year):
@@ -84,14 +84,14 @@ class Excel:
             result = "".join([i for i in column if i is not i.isdigit()])
             return result #A
 
-    def add_header_image(self, selection="B1"):
+    def add_header_image(self, selection="B1", path_image="src/allora.PNG"):
         if isinstance(selection, tuple) or isinstance(selection, list):
             select = Excel.transformSelection(selection)
         elif not(isinstance(selection, str)):
             raise Exception("Not String or tuple / list")
         else:
             select = selection
-        img = Image("src/allora.PNG")
+        img = Image(path_image)
         self.sh.add_image(img, select)
 
     def add_value(self, selection, value=None):
@@ -184,19 +184,6 @@ class Excel:
         self.wb.save("{}Prezenta-{}.xlsx".format(self.output_folder, self.month))
 
 if __name__ == '__main__':
-    introductionData = ["SC ALLORA VISION TECH SRL",
-    "Reg. Com. J40/11468/2011",
-    "CUI:RO29146323",
-    "Sediul: Calea Rahovei nr.266-268, corp 60, et.2, camera 30A",
-    "incinta Electromagnetica\nBusiness Park.",
-    "Contul: RO49INGB0000999903977417",
-    "Persoana de contact: Nicoleta Baciu",
-    "Telefon: 0723290110/0721153839"
-    ]
-
-    ORA_INCEPUT = "09:00"
-    ORA_SFARSIT = "17:30"
-    PAUZA = "12:30-13:00"
     current_year = date.today().year
     current_month = date.today().month
 
@@ -205,20 +192,31 @@ if __name__ == '__main__':
 
     # getting free legal days
     free_days = []
-    with open("libere_{}.txt".format(current_year), "r") as file:
-        for item in file.readlines():
-            day, month, year = list(map(int, item.strip().split("/")))
-            if month  == current_month:
-                free_days.append(day)
 
     settings = Libere.loadJson("settings.json")
     persons = settings["persons"]
     dim_columns = settings["dim_columns"]
+    introductionData = list(settings["company_data"].values())
+    ORA_INCEPUT, ORA_SFARSIT, PAUZA = list(settings["schedule"].values())
+    INPUT_FOLDER = settings["input_folder"]
+    logo_company = settings["company_data"]["logo_img_path"]
+
+    try:
+        with open(INPUT_FOLDER + "libere_{}.txt".format(current_year), "r") as file:
+            for item in file.readlines():
+                day, month, year = list(map(int, item.strip().split("/")))
+                if month  == current_month:
+                    free_days.append(day)
+    except FileNotFoundError:
+        print("Generate free_days first.")
+        sys.exit("Generate free_days first.")
+
+
 
     wb = Excel(settings["output_folder"])
 
     #adaugat imagine
-    wb.add_header_image()
+    wb.add_header_image(path_image=logo_company)
 
     # adaugat header text
     for i in range(4, 12):
